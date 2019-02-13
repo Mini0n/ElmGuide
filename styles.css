@@ -5,30 +5,35 @@ body {
 
 img {
   border: 1px solid #79419b;
-  margin: 5px;
+  margin: 6px auto;
 }
 
 .large {
-  width: 500px;
-  float: right;
+  width: 400px;
+  float: left;
+}
+
+.thumb {
+  width: 150px;
+  float: left;
 }
 
 .selected {
   margin: 0;
-  border: 6px solid #7a4699;
+  border: 4px solid #7a4699;
 }
 
 .content {
-  margin: 40px auto;
-  width: 960px;
+  margin: 0px auto;
+  /* width: 960px; */
 }
 
 #thumbnails {
-  width: 440px;
+  width: 200px;
   float: left;
 }
 
 h1 {
   font-family: 'Courier New', Courier, monospace;
-  color: white;
+  color: #7a4699;
 }
