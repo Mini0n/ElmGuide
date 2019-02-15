@@ -4310,6 +4310,7 @@ function _Browser_load(url)
 		}
 	}));
 }
+var author$project$Grubi$SML = {$: 'SML'};
 var elm$core$Basics$EQ = {$: 'EQ'};
 var elm$core$Basics$LT = {$: 'LT'};
 var elm$core$Elm$JsArray$foldr = _JsArray_foldr;
@@ -4391,33 +4392,46 @@ var elm$core$Set$toList = function (_n0) {
 	return elm$core$Dict$keys(dict);
 };
 var author$project$Grubi$initialModel = {
-	selected: '2t9sbaLKTaDWeSFhqr',
+	selected: 'jnUJCp8JAOC7faEzuY',
+	testValue: 'Pupe',
+	thumbSize: author$project$Grubi$SML,
 	thumbs: _List_fromArray(
 		[
 			{url: 'xWBjMpOr7rMJ00XA3Y'},
 			{url: '2t9sbaLKTaDWeSFhqr'},
-			{url: 'lzoFgUxKNpR67fAu1l'}
+			{url: 'lzoFgUxKNpR67fAu1l'},
+			{url: 'ja8lfMYNhCbISSpnDW'},
+			{url: 'jnUJCp8JAOC7faEzuY'},
+			{url: 'eWcQik3FYpL2M'}
 		])
 };
-var elm$core$Basics$eq = _Utils_equal;
 var author$project$Grubi$update = F2(
 	function (msg, model) {
-		return (msg.description === 'ClickedThumb') ? _Utils_update(
-			model,
-			{selected: msg.data}) : model;
+		switch (msg.$) {
+			case 'SelectThumb':
+				var url = msg.a;
+				return _Utils_update(
+					model,
+					{selected: url});
+			case 'SelectRandom':
+				return _Utils_update(
+					model,
+					{selected: 'jnUJCp8JAOC7faEzuY'});
+			default:
+				var size = msg.a;
+				return _Utils_update(
+					model,
+					{thumbSize: size});
+		}
 	});
-var elm$core$Basics$append = _Utils_append;
-var author$project$Grubi$urlLarge = function (gifCode) {
-	return 'https://media.giphy.com/media/' + (gifCode + '/giphy.gif');
-};
-var author$project$Grubi$urlThumb = function (gifCode) {
-	return 'https://media.giphy.com/media/' + (gifCode + '/200w_d.gif');
-};
-var elm$core$Basics$True = {$: 'True'};
+var author$project$Grubi$LRG = {$: 'LRG'};
+var author$project$Grubi$MDM = {$: 'MDM'};
+var author$project$Grubi$SelectRandom = {$: 'SelectRandom'};
 var elm$core$Basics$identity = function (x) {
 	return x;
 };
 var elm$core$Basics$False = {$: 'False'};
+var elm$core$Basics$True = {$: 'True'};
 var elm$core$Result$isOk = function (result) {
 	if (result.$ === 'Ok') {
 		return true;
@@ -4496,6 +4510,7 @@ var elm$core$Basics$apR = F2(
 	function (x, f) {
 		return f(x);
 	});
+var elm$core$Basics$eq = _Utils_equal;
 var elm$core$Tuple$first = function (_n0) {
 	var x = _n0.a;
 	return x;
@@ -4621,6 +4636,7 @@ var elm$json$Json$Decode$OneOf = function (a) {
 	return {$: 'OneOf', a: a};
 };
 var elm$core$Basics$and = _Basics_and;
+var elm$core$Basics$append = _Utils_append;
 var elm$core$Basics$or = _Basics_or;
 var elm$core$Char$toCode = _Char_toCode;
 var elm$core$Char$isLower = function (_char) {
@@ -4824,6 +4840,72 @@ var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
 			return 3;
 	}
 };
+var elm$html$Html$button = _VirtualDom_node('button');
+var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
+var elm$virtual_dom$VirtualDom$Normal = function (a) {
+	return {$: 'Normal', a: a};
+};
+var elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
+var elm$html$Html$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			elm$virtual_dom$VirtualDom$on,
+			event,
+			elm$virtual_dom$VirtualDom$Normal(decoder));
+	});
+var elm$html$Html$Events$onClick = function (msg) {
+	return A2(
+		elm$html$Html$Events$on,
+		'click',
+		elm$json$Json$Decode$succeed(msg));
+};
+var author$project$Grubi$randomButton = A2(
+	elm$html$Html$button,
+	_List_fromArray(
+		[
+			elm$html$Html$Events$onClick(author$project$Grubi$SelectRandom)
+		]),
+	_List_fromArray(
+		[
+			elm$html$Html$text('rand0m')
+		]));
+var author$project$Grubi$SelectSize = function (a) {
+	return {$: 'SelectSize', a: a};
+};
+var author$project$Grubi$sizeToString = function (size) {
+	switch (size.$) {
+		case 'SML':
+			return 'small';
+		case 'MDM':
+			return 'medium';
+		default:
+			return 'large';
+	}
+};
+var author$project$Grubi$sizeButtons = function (size) {
+	return A2(
+		elm$html$Html$button,
+		_List_fromArray(
+			[
+				elm$html$Html$Events$onClick(
+				author$project$Grubi$SelectSize(size))
+			]),
+		_List_fromArray(
+			[
+				elm$html$Html$text(
+				author$project$Grubi$sizeToString(size))
+			]));
+};
+var author$project$Grubi$urlLarge = function (gifCode) {
+	return 'https://media.giphy.com/media/' + (gifCode + '/giphy.gif');
+};
+var author$project$Grubi$SelectThumb = function (a) {
+	return {$: 'SelectThumb', a: a};
+};
+var author$project$Grubi$urlThumb = function (gifCode) {
+	return 'https://media.giphy.com/media/' + (gifCode + '/200w_d.gif');
+};
 var elm$html$Html$img = _VirtualDom_node('img');
 var elm$core$List$foldrHelper = F4(
 	function (fn, acc, ctr, ls) {
@@ -4934,25 +5016,8 @@ var elm$html$Html$Attributes$src = function (url) {
 		'src',
 		_VirtualDom_noJavaScriptOrHtmlUri(url));
 };
-var elm$virtual_dom$VirtualDom$Normal = function (a) {
-	return {$: 'Normal', a: a};
-};
-var elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
-var elm$html$Html$Events$on = F2(
-	function (event, decoder) {
-		return A2(
-			elm$virtual_dom$VirtualDom$on,
-			event,
-			elm$virtual_dom$VirtualDom$Normal(decoder));
-	});
-var elm$html$Html$Events$onClick = function (msg) {
-	return A2(
-		elm$html$Html$Events$on,
-		'click',
-		elm$json$Json$Decode$succeed(msg));
-};
-var author$project$Grubi$viewThumbs = F2(
-	function (selected, thumb) {
+var author$project$Grubi$viewThumbs = F3(
+	function (size, selected, thumb) {
 		return A2(
 			elm$html$Html$img,
 			_List_fromArray(
@@ -4965,17 +5030,18 @@ var author$project$Grubi$viewThumbs = F2(
 							_Utils_Tuple2(
 							'selected',
 							_Utils_eq(selected, thumb.url)),
-							_Utils_Tuple2('thumb', true)
+							_Utils_Tuple2('thumb', true),
+							_Utils_Tuple2(
+							author$project$Grubi$sizeToString(size),
+							true)
 						])),
 					elm$html$Html$Events$onClick(
-					{data: thumb.url, description: 'ClickedThumb'})
+					author$project$Grubi$SelectThumb(thumb.url))
 				]),
 			_List_Nil);
 	});
 var elm$html$Html$div = _VirtualDom_node('div');
 var elm$html$Html$h1 = _VirtualDom_node('h1');
-var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
 var elm$html$Html$Attributes$id = elm$html$Html$Attributes$stringProperty('id');
 var author$project$Grubi$view = function (model) {
 	return A2(
@@ -4995,19 +5061,37 @@ var author$project$Grubi$view = function (model) {
 					])),
 				A2(
 				elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						author$project$Grubi$randomButton,
+						A2(
+						elm$html$Html$div,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('size_btns')
+							]),
+						A2(
+							elm$core$List$map,
+							author$project$Grubi$sizeButtons,
+							_List_fromArray(
+								[author$project$Grubi$SML, author$project$Grubi$MDM, author$project$Grubi$LRG])))
+					])),
+				A2(
+				elm$html$Html$div,
 				_List_fromArray(
 					[
 						elm$html$Html$Attributes$id('thumbnails')
 					]),
 				A2(
 					elm$core$List$map,
-					author$project$Grubi$viewThumbs(model.selected),
+					A2(author$project$Grubi$viewThumbs, model.thumbSize, model.selected),
 					model.thumbs)),
 				A2(
 				elm$html$Html$img,
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('large'),
+						elm$html$Html$Attributes$class('selected_thumb'),
 						elm$html$Html$Attributes$src(
 						author$project$Grubi$urlLarge(model.selected))
 					]),
