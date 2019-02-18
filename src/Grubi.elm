@@ -5,6 +5,7 @@ import Browser
 import Html exposing (button, div, h1, h4, img, input, label, pre, text)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
+import Random
 
 
 type alias Thumb =
@@ -14,6 +15,7 @@ type alias Thumb =
 type Click
     = SelectThumb String
     | SelectSize ThumbSize
+    | GetSelectIndex Int
     | SelectRandom
 
 
@@ -68,29 +70,30 @@ thumbArray : Array Thumb
 thumbArray =
     Array.fromList initialModel.thumbs
 
-
+main : Program () Model Click
 main =
-    Browser.sandbox
-        { init = initialModel
+    Browser.element
+        { init = \flags -> ( initialModel, Cmd.none )
         , view = view
         , update = update
+        , subscriptions = \model -> Sub.none
         }
 
 
-
--- update : Click -> Model -> Model
-
-
+update : Click -> Model -> ( Model, Cmd Click )
 update msg model =
     case msg of
         SelectThumb url ->
-            { model | selected = url }
+            ( { model | selected = url }, Cmd.none )
 
         SelectRandom ->
-            { model | selected = "jnUJCp8JAOC7faEzuY" }
+            ( model, Random.generate GetSelectIndex randomPhotoPicker )
 
         SelectSize size ->
-            { model | thumbSize = size }
+            ( { model | thumbSize = size }, Cmd.none )
+
+        GetSelectIndex index ->
+            ( { model | selected = getThumbURL index }, Cmd.none )
 
 
 
@@ -162,3 +165,8 @@ getThumbURL index =
 
         Nothing ->
             ""
+
+
+randomPhotoPicker : Random.Generator Int
+randomPhotoPicker =
+    Random.int 0 (Array.length thumbArray - 1)
