@@ -1,6 +1,7 @@
 module Grubi exposing (main)
 
-import Array exposing (Array)
+-- import Array exposing (Array)
+
 import Browser
 import Html exposing (button, div, h1, h4, img, input, label, pre, text)
 import Html.Attributes exposing (..)
@@ -8,29 +9,44 @@ import Html.Events exposing (onClick)
 import Random
 
 
-type alias Thumb =
-    { url : String }
-
-
 type Click
     = SelectThumb String
     | SelectSize ThumbSize
-    | GetSelectIndex Int
+      -- | GetSelectIndex Int
+    | GetSelectThumb Thumb
     | SelectRandom
-
-
-type alias ClickSize =
-    { data : ThumbSize, description : String }
-
-
-type alias Model =
-    { thumbs : List Thumb, selected : String, thumbSize : ThumbSize, testValue : String }
 
 
 type ThumbSize
     = SML
     | MDM
     | LRG
+
+
+type Status
+    = Loading
+    | Loaded (List Thumb) String
+    | Errored String
+
+
+type alias ClickSize =
+    { data : ThumbSize, description : String }
+
+
+type alias Thumb =
+    { url : String }
+
+
+
+-- type alias Model =
+--     { thumbs : List Thumb, selected : String, thumbSize : ThumbSize, testValue : String }
+-- model definition for online loading
+
+
+type alias Model =
+    { status : Status
+    , thumbSize : ThumbSize
+    }
 
 
 view : Model -> Html.Html Click
@@ -44,31 +60,75 @@ view model =
 
             -- (List.map sizeRadios [ SML, MDM, LRG ])
             ]
-        , div [ id "thumbnails" ]
-            (List.map (viewThumbs model.thumbSize model.selected) model.thumbs)
-        , img [ class "selected_thumb", src (urlLarge model.selected) ] []
+        , div [ id "thumbnails" ] <|
+            case model.status of
+                Loaded thumbs selectedURL ->
+                    List.map (viewThumbs model.thumbSize selectedURL) thumbs
+
+                Loading ->
+                    []
+
+                Errored errorMsg ->
+                    [ text ("Error: " ++ errorMsg) ]
+
+        -- (List.map (viewThumbs model.thumbSize model.selected) model.thumbs)
+        , case model.status of
+            Loaded thumbs selectedURL ->
+                img [ class "selected_thumb", src (urlLarge selectedURL) ] []
+
+            Loading ->
+                img [] []
+
+            Errored errorMsg ->
+                img [] [ text ("Error: " ++ errorMsg) ]
+
+        -- img [ class "selected_thumb", src (urlLarge model.selected) ] []
         ]
+
+
+viewLoaded : List Thumb -> String -> ThumbSize -> List (Html.Html Click)
+viewLoaded thumbs selectedURL chosenSize =
+    [ h1 [] [ text "g r u b i" ]
+    , div []
+        [ randomButton
+        , div [ class "size_btns" ]
+            (List.map sizeButtons [ SML, MDM, LRG ])
+        ]
+    , div [ id "thumbnails" ]
+        (List.map (viewThumbs chosenSize selectedURL) thumbs)
+    ]
+
+
+
+-- initialModel : Model
+-- initialModel =
+--     { thumbs =
+--         [ { url = "xWBjMpOr7rMJ00XA3Y" } -- uh, uhh ♫
+--         , { url = "2t9sbaLKTaDWeSFhqr" } -- turbo jalo
+--         , { url = "lzoFgUxKNpR67fAu1l" } -- satan cares
+--         , { url = "ja8lfMYNhCbISSpnDW" } -- baler berga
+--         , { url = "jnUJCp8JAOC7faEzuY" } -- ringo deathstarr
+--         , { url = "eWcQik3FYpL2M" } -- bye, bye macadam
+--         ]
+--     , selected = "jnUJCp8JAOC7faEzuY"
+--     , thumbSize = SML
+--     , testValue = "Pupe"
+--     }
+-- initialModel for online loading
 
 
 initialModel : Model
 initialModel =
-    { thumbs =
-        [ { url = "xWBjMpOr7rMJ00XA3Y" } -- uh, uhh ♫
-        , { url = "2t9sbaLKTaDWeSFhqr" } -- turbo jalo
-        , { url = "lzoFgUxKNpR67fAu1l" } -- satan cares
-        , { url = "ja8lfMYNhCbISSpnDW" } -- baler berga
-        , { url = "jnUJCp8JAOC7faEzuY" } -- ringo deathstarr
-        , { url = "eWcQik3FYpL2M" } -- bye, bye macadam
-        ]
-    , selected = "jnUJCp8JAOC7faEzuY"
+    { status = Loading
     , thumbSize = SML
-    , testValue = "Pupe"
     }
 
 
-thumbArray : Array Thumb
-thumbArray =
-    Array.fromList initialModel.thumbs
+
+-- thumbArray : Array Thumb
+-- thumbArray =
+--     Array.fromList initialModel.thumbs
+
 
 main : Program () Model Click
 main =
@@ -84,16 +144,41 @@ update : Click -> Model -> ( Model, Cmd Click )
 update msg model =
     case msg of
         SelectThumb url ->
-            ( { model | selected = url }, Cmd.none )
+            -- ( { model | selected = url }, Cmd.none )
+            ( { model | status = selectUrl url model.status }, Cmd.none )
 
         SelectRandom ->
-            ( model, Random.generate GetSelectIndex randomPhotoPicker )
+            -- ( model, Random.generate GetSelectIndex randomPhotoPicker )
+            case model.status of
+                Loaded (firstThumb :: otherThumbs) _ ->
+                    ( model, Random.generate GotRandomThumb (Random.uniform firstThumb otherThumbs) )
+
+                Loading ->
+                    ( model, Cmd.none )
+
+                Errored errorMsg ->
+                    ( model, Cmd.none )
 
         SelectSize size ->
             ( { model | thumbSize = size }, Cmd.none )
 
-        GetSelectIndex index ->
-            ( { model | selected = getThumbURL index }, Cmd.none )
+        -- GetSelectIndex index ->
+        -- ( { model | selected = getThumbURL index }, Cmd.none )
+        GetSelectThumb thumb ->
+            ( { model | status = selectUrl thumb.url model.status }, Cmd.none )
+
+
+selectUrl : String -> Status -> Status
+selectUrl url status =
+    case status of
+        Loaded photos _ ->
+            Loaded photos url
+
+        Loading ->
+            status
+
+        Errored errorMsg ->
+            status
 
 
 
@@ -157,16 +242,14 @@ sizeToString size =
             "large"
 
 
-getThumbURL : Int -> String
-getThumbURL index =
-    case Array.get index thumbArray of
-        Just thumb ->
-            thumb.url
 
-        Nothing ->
-            ""
-
-
-randomPhotoPicker : Random.Generator Int
-randomPhotoPicker =
-    Random.int 0 (Array.length thumbArray - 1)
+-- getThumbURL : Int -> String
+-- getThumbURL index =
+--     case Array.get index thumbArray of
+--         Just thumb ->
+--             thumb.url
+--         Nothing ->
+--             ""
+-- randomPhotoPicker : Random.Generator Int
+-- randomPhotoPicker =
+--     Random.int 0 (Array.length thumbArray - 1)
