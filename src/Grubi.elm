@@ -13,7 +13,8 @@ type Click
     = SelectThumb String
     | SelectSize ThumbSize
       -- | GetSelectIndex Int
-    | GetSelectThumb Thumb
+      -- | GetSelectThumb Thumb
+    | GetRandomThumb Thumb
     | SelectRandom
 
 
@@ -151,7 +152,10 @@ update msg model =
             -- ( model, Random.generate GetSelectIndex randomPhotoPicker )
             case model.status of
                 Loaded (firstThumb :: otherThumbs) _ ->
-                    ( model, Random.generate GotRandomThumb (Random.uniform firstThumb otherThumbs) )
+                    ( model, Random.generate GetRandomThumb (Random.uniform firstThumb otherThumbs) )
+
+                Loaded [] _ ->
+                    ( model, Cmd.none )
 
                 Loading ->
                     ( model, Cmd.none )
@@ -164,7 +168,8 @@ update msg model =
 
         -- GetSelectIndex index ->
         -- ( { model | selected = getThumbURL index }, Cmd.none )
-        GetSelectThumb thumb ->
+        -- GetSelectThumb thumb ->
+        GetRandomThumb thumb ->
             ( { model | status = selectUrl thumb.url model.status }, Cmd.none )
 
 
