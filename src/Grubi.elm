@@ -6,6 +6,7 @@ import Browser
 import Html exposing (button, div, h1, h4, img, input, label, pre, text)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
+import Http
 import Random
 
 
@@ -16,6 +17,7 @@ type Click
       -- | GetSelectThumb Thumb
     | GetRandomThumb Thumb
     | SelectRandom
+    | GetThumbs (Result Http.Error String)
 
 
 type ThumbSize
@@ -171,6 +173,23 @@ update msg model =
         -- GetSelectThumb thumb ->
         GetRandomThumb thumb ->
             ( { model | status = selectUrl thumb.url model.status }, Cmd.none )
+
+        GetThumbs result ->
+            case result of
+                Ok responseStr ->
+                    case String.split "," responseStr of
+                        (firstURL :: _) as urls ->
+                            let
+                                thumbs =
+                                    List.map (\url -> { url = url }) urls
+                            in
+                            ( { model | status = Loaded thumbs firstURL }, Cmd.none )
+
+                        [] ->
+                            ( { model | status = Errored "No photos found." }, Cmd.none )
+
+                Err httpError ->
+                    ( { model | status = Errored "Server error!" }, Cmd.none )
 
 
 selectUrl : String -> Status -> Status
