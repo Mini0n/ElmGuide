@@ -26,11 +26,12 @@ button {
   width: 150px;
   float: left;
   margin: 4px;
+  padding: 0px;
 }
 
 .selected {
-  margin: 4px;
-  border: 2px solid #7a4699;
+  /* margin: 4px; */
+  border: 1px solid white;
 }
 
 .content {

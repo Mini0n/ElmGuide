@@ -1,23 +1,30 @@
 module Grubi exposing (main)
 
 -- import Array exposing (Array)
+-- import Html.Attributes exposing (..)
 
 import Browser
 import Html exposing (button, div, h1, h4, img, input, label, pre, text)
-import Html.Attributes exposing (..)
+import Html.Attributes exposing (class, classList, id, name, src, title, type_)
 import Html.Events exposing (onClick)
 import Http
+import Json.Decode exposing (Decoder, bool, int, list, string, succeed)
+import Json.Decode.Pipeline exposing (optional, required)
 import Random
 
 
 type Click
     = SelectThumb String
     | SelectSize ThumbSize
-      -- | GetSelectIndex Int
-      -- | GetSelectThumb Thumb
     | GetRandomThumb Thumb
+    | GetThumbs (Result Http.Error (List Thumb))
     | SelectRandom
-    | GetThumbs (Result Http.Error String)
+
+
+
+-- | GetSelectIndex Int
+-- | GetSelectThumb Thumb
+-- | GetThumbs (Result Http.Error String)
 
 
 type ThumbSize
@@ -37,7 +44,10 @@ type alias ClickSize =
 
 
 type alias Thumb =
-    { url : String }
+    { url : String
+    , size : Int
+    , title : String
+    }
 
 
 
@@ -60,8 +70,6 @@ view model =
             [ randomButton
             , div [ class "size_btns" ]
                 (List.map sizeButtons [ SML, MDM, LRG ])
-
-            -- (List.map sizeRadios [ SML, MDM, LRG ])
             ]
         , div [ id "thumbnails" ] <|
             case model.status of
@@ -73,8 +81,6 @@ view model =
 
                 Errored errorMsg ->
                     [ text ("Error: " ++ errorMsg) ]
-
-        -- (List.map (viewThumbs model.thumbSize model.selected) model.thumbs)
         , case model.status of
             Loaded thumbs selectedURL ->
                 img [ class "selected_thumb", src (urlLarge selectedURL) ] []
@@ -84,8 +90,6 @@ view model =
 
             Errored errorMsg ->
                 img [] [ text ("Error: " ++ errorMsg) ]
-
-        -- img [ class "selected_thumb", src (urlLarge model.selected) ] []
         ]
 
 
@@ -102,24 +106,6 @@ viewLoaded thumbs selectedURL chosenSize =
     ]
 
 
-
--- initialModel : Model
--- initialModel =
---     { thumbs =
---         [ { url = "xWBjMpOr7rMJ00XA3Y" } -- uh, uhh ♫
---         , { url = "2t9sbaLKTaDWeSFhqr" } -- turbo jalo
---         , { url = "lzoFgUxKNpR67fAu1l" } -- satan cares
---         , { url = "ja8lfMYNhCbISSpnDW" } -- baler berga
---         , { url = "jnUJCp8JAOC7faEzuY" } -- ringo deathstarr
---         , { url = "eWcQik3FYpL2M" } -- bye, bye macadam
---         ]
---     , selected = "jnUJCp8JAOC7faEzuY"
---     , thumbSize = SML
---     , testValue = "Pupe"
---     }
--- initialModel for online loading
-
-
 initialModel : Model
 initialModel =
     { status = Loading
@@ -127,19 +113,13 @@ initialModel =
     }
 
 
-
--- thumbArray : Array Thumb
--- thumbArray =
---     Array.fromList initialModel.thumbs
-
-
 main : Program () Model Click
 main =
     Browser.element
-        { init = \flags -> ( initialModel, Cmd.none )
+        { init = \flags -> ( initialModel, initialCmd )
         , view = view
         , update = update
-        , subscriptions = \model -> Sub.none
+        , subscriptions = \_ -> Sub.none
         }
 
 
@@ -147,11 +127,9 @@ update : Click -> Model -> ( Model, Cmd Click )
 update msg model =
     case msg of
         SelectThumb url ->
-            -- ( { model | selected = url }, Cmd.none )
             ( { model | status = selectUrl url model.status }, Cmd.none )
 
         SelectRandom ->
-            -- ( model, Random.generate GetSelectIndex randomPhotoPicker )
             case model.status of
                 Loaded (firstThumb :: otherThumbs) _ ->
                     ( model, Random.generate GetRandomThumb (Random.uniform firstThumb otherThumbs) )
@@ -168,28 +146,19 @@ update msg model =
         SelectSize size ->
             ( { model | thumbSize = size }, Cmd.none )
 
-        -- GetSelectIndex index ->
-        -- ( { model | selected = getThumbURL index }, Cmd.none )
-        -- GetSelectThumb thumb ->
         GetRandomThumb thumb ->
             ( { model | status = selectUrl thumb.url model.status }, Cmd.none )
 
-        GetThumbs result ->
-            case result of
-                Ok responseStr ->
-                    case String.split "," responseStr of
-                        (firstURL :: _) as urls ->
-                            let
-                                thumbs =
-                                    List.map (\url -> { url = url }) urls
-                            in
-                            ( { model | status = Loaded thumbs firstURL }, Cmd.none )
+        GetThumbs (Ok thumbs) ->
+            case thumbs of
+                first :: rest ->
+                    ( { model | status = Loaded thumbs first.url }, Cmd.none )
 
-                        [] ->
-                            ( { model | status = Errored "No photos found." }, Cmd.none )
+                [] ->
+                    ( { model | status = Errored "No photos found." }, Cmd.none )
 
-                Err httpError ->
-                    ( { model | status = Errored "Server error!" }, Cmd.none )
+        GetThumbs (Err _) ->
+            ( { model | status = Errored "Server error!" }, Cmd.none )
 
 
 selectUrl : String -> Status -> Status
@@ -209,10 +178,39 @@ selectUrl url status =
 -- Helper functions
 
 
+thumbDecoder : Decoder Thumb
+thumbDecoder =
+    -- succeed buildThumb
+    succeed Thumb
+        |> required "url" string
+        |> required "size" int
+        |> optional "title" string "(untitled)"
+
+
+
+-- buildThumb : String -> Int -> String -> Thumb
+-- buildThumb url size title =
+--     { url = url, size = size, title = title }
+
+
+initialCmd : Cmd Click
+initialCmd =
+    list thumbDecoder
+        |> Http.get "http://elm-in-action.com/photos/list.json"
+        |> Http.send GetThumbs
+
+
+
+-- "http://elm-in-action.com/photos/list"
+-- |> Http.getString
+-- |> Http.send GetThumbs
+
+
 viewThumbs : ThumbSize -> String -> Thumb -> Html.Html Click
 viewThumbs size selected thumb =
     img
         [ src (urlThumb thumb.url)
+        , title (thumb.title ++ "[" ++ String.fromInt thumb.size ++ "]")
         , classList
             [ ( "selected", selected == thumb.url )
             , ( "thumb", True )
@@ -225,12 +223,14 @@ viewThumbs size selected thumb =
 
 urlThumb : String -> String
 urlThumb gifCode =
-    "https://media.giphy.com/media/" ++ gifCode ++ "/200w_d.gif"
+    -- "https://media.giphy.com/media/" ++ gifCode ++ "/200w_d.gif"
+    "http://elm-in-action.com/" ++ gifCode
 
 
 urlLarge : String -> String
 urlLarge gifCode =
-    "https://media.giphy.com/media/" ++ gifCode ++ "/giphy.gif"
+    -- "https://media.giphy.com/media/" ++ gifCode ++ "/giphy.gif"
+    "http://elm-in-action.com/" ++ gifCode
 
 
 randomButton : Html.Html Click
